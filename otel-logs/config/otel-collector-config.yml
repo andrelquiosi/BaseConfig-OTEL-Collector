@@ -1,6 +1,6 @@
 receivers:
   filelog:
-    include: [ /var/log/*.log ]
+    include: [ /*/*.log ]
     start_at: beginning
     poll_interval: 500ms
     include_file_path: true
@@ -8,6 +8,16 @@ receivers:
     operators:
       - type: json_parser
         id: parse_json
+        timestamp:
+          parse_from: attributes.time
+          layout: '%Y-%m-%dT%H:%M:%S%z'
+        severity:
+          parse_from: attributes.level
+        body: attributes.message
+        
+      - type: regex_parser
+        id: parse_plain_log
+        regex: '^(?P<time>[^ ]+) \[?(?P<level>[A-Z]+)\]? (?P<application>[^:]+): (?P<message>.+)$'
         timestamp:
           parse_from: attributes.time
           layout: '%Y-%m-%dT%H:%M:%S%z'

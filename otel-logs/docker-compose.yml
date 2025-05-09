@@ -4,7 +4,7 @@ services:
     container_name: otel-collector
     volumes:
       - ./config/otel-collector-config.yml:/etc/otel/config.yaml
-      - monitoring-gateway-log:/var/log
+      - logs:/log
     command: ["--config=/etc/otel/config.yaml"]
     depends_on:
       - loki
@@ -13,6 +13,8 @@ services:
       - "4318:4318"
       - "8888:8888"
       - "13133:13133"
+    networks:
+      - observability-network
 
   loki:
     image: grafana/loki:2.9.2
@@ -20,7 +22,7 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     networks:
-      - gateway-network
+      - observability-network
 
   grafana:
     image: grafana/grafana:latest
@@ -34,12 +36,47 @@ services:
       - grafana-storage:/var/lib/grafana
       - ./provisioning/datasources:/etc/grafana/provisioning/datasources
     networks:
-      - gateway-network
+      - observability-network
+
+  monitoring-gateway:
+    image: busybox
+    command: >
+      sh -c 'while true; do
+        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\", \"level\":\"info\",\"application\":\"monitoring-gateway\",\"message\":\"log de teste gerado automaticamente do monitoring-gateway\"}" >> /log/monitoring-gateway.log;
+        sleep 5;
+      done'
+    volumes:
+      - logs:/log
+    networks:
+      - observability-network
+  monitoring-devices:
+    image: busybox
+    command: >
+      sh -c 'while true; do
+        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\", \"level\":\"info\",\"application\":\"monitoring-devices\",\"message\":\"log de teste gerado automaticamente do monitoring-devices\"}" >> /log/monitoring-devices.log;
+        sleep 5;
+      done'
+    volumes:
+      - logs:/log
+    networks:
+      - observability-network
+
+  monitoring-lote:
+    image: busybox
+    command: >
+      sh -c 'while true; do
+        echo "$(date -u +%Y-%m-%dT%H:%M:%S%z) [INFO] monitoring-lote: log de teste gerado automaticamente do monitoring-lote" >> /log/monitoring-lote.log;
+        sleep 5;
+      done'
+    volumes:
+      - logs:/log
+    networks:
+      - observability-network
 
 volumes:
   grafana-storage:
-  monitoring-gateway-log:
+  logs:
 
 networks:
-  gateway-network:
+  observability-network:
     driver: bridge
