@@ -1,0 +1,106 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    volumes:
+      - ./config/otel-collector-config.yaml:/etc/otel/config.yaml
+      - logs:/log
+    command: ["--config=/etc/otel/config.yaml"]
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8889:8889"
+      - "13133:13133"
+    networks:
+      - observability-network
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - observability-network
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./config/provisioning/datasources/grafana:/etc/grafana/provisioning/datasources
+    networks:
+      - observability-network
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./config/prometheus.yaml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    networks:
+      - observability-network
+  tempo:
+    image: grafana/tempo:2.4.1
+    volumes:
+      - ./config/tempo.yaml:/etc/tempo.yaml
+      - ./tempo-data:/tmp/tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    ports:
+      - "3200:3200"   # HTTP API
+    networks:
+      - observability-network
+  otel-metric-trace-generator:
+    build: ./otel-metric-trace-generator
+    depends_on:
+      - otel-collector
+    networks:
+      - observability-network
+  monitoring-gateway:
+    image: busybox
+    command: >
+      sh -c 'while true; do
+        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\", \"level\":\"info\",\"application\":\"monitoring-gateway\",\"message\":\"log de teste gerado automaticamente do monitoring-gateway\"}" >> /log/monitoring-gateway.log;
+        sleep 5;
+      done'
+    volumes:
+      - logs:/log
+    networks:
+      - observability-network
+  monitoring-devices:
+    image: busybox
+    command: >
+      sh -c 'while true; do
+        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\",\"level\":\"info\",\"application\":\"monitoring-devices\",\"message\":\"log de teste gerado automaticamente do monitoring-devices\"}" >> /log/monitoring-devices.log;
+        sleep 5;
+      done'
+    volumes:
+      - logs:/log
+    networks:
+      - observability-network
+  monitoring-lote:
+    image: busybox
+    command: >
+      sh -c 'while true; do
+        echo "$(date -u +%Y-%m-%dT%H:%M:%S%z) [INFO] monitoring-lote: log de teste gerado automaticamente do monitoring-lote" >> /log/monitoring-lote.log;
+        sleep 5;
+      done'
+    volumes:
+      - logs:/log
+    networks:
+      - observability-network
+volumes:
+  grafana-storage:
+  logs:
+networks:
+  observability-network:
+    driver: bridge

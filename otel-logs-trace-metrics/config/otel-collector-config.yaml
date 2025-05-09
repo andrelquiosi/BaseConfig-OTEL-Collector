@@ -6,25 +6,18 @@ receivers:
     include_file_path: true
     include_file_name: true
     operators:
-      - type: router
-        id: log_router
-        routes:
-          - output: json_route
-            expr: 'body startsWith "{"'
-          - output: plain_route
-            expr: 'not (body startsWith "{")'
-
-      - id: json_route
-        type: json_parser
+      - type: json_parser
+        id: parse_json
+        if: 'body matches "^\\{"'  # só tenta parsear se começa com {
         timestamp:
           parse_from: attributes.time
           layout: '%Y-%m-%dT%H:%M:%S%z'
         severity:
           parse_from: attributes.level
         body: attributes.message
-        
-      - id: plain_route
-        type: regex_parser
+      - type: regex_parser
+        id: parse_plain_log
+        if: 'not (body matches "^\\{")'  # só tenta parsear se NÃO começa com {
         regex: '^(?P<time>[^ ]+) \[?(?P<level>[A-Z]+)\]? (?P<application>[^:]+): (?P<message>.+)$'
         timestamp:
           parse_from: attributes.time
@@ -33,17 +26,39 @@ receivers:
           parse_from: attributes.level
         body: attributes.message
 
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch: 
+
 exporters:
+  otlp:
+    endpoint: tempo:4317
+    tls:
+      insecure: true  # Desative isso se usar HTTPS
+  prometheus:
+    endpoint: "localhost:8889"  # Prometheus faz scrape aqui      
   loki:
     endpoint: http://loki:3100/loki/api/v1/push
   debug:
     verbosity: detailed
 
-processors:
-  batch:
-
 service:
   pipelines:
+
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]
+
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
+
     logs:
       receivers: [filelog]
       processors: [batch]

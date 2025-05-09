@@ -13,12 +13,12 @@ trace.set_tracer_provider(TracerProvider())
 tracer = trace.get_tracer(__name__)
 trace.get_tracer_provider().add_span_processor(
     BatchSpanProcessor(
-        OTLPSpanExporter(endpoint="http://otel-collector:4317", insecure=True)
+        OTLPSpanExporter(endpoint="otel-collector:4317", insecure=True)
     )
 )
 
 # Configure metrics
-exporter = OTLPMetricExporter(endpoint="http://otel-collector:4317", insecure=True)
+exporter = OTLPMetricExporter(endpoint="otel-collector:4317", insecure=True)
 reader = PeriodicExportingMetricReader(exporter)
 provider = MeterProvider(metric_readers=[reader])
 metrics.set_meter_provider(provider)
