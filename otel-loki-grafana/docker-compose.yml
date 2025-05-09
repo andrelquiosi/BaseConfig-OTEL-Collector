@@ -1,0 +1,77 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    volumes:
+      - ./config/otel-collector-config.yaml:/etc/otel/config.yaml
+      - monitoring-gateway-log:/var/log
+    command: ["--config=/etc/otel/config.yaml"]
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8888:8888"
+      - "13133:13133"
+
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    volumes:
+          - loki_data:/loki/data  # Volumes para persistir os dados do Loki
+          - ./config/loki.yaml:/etc/loki/loki-config.yaml  # Arquivo de configuração do Loki
+    command: -config.file=/etc/loki/loki-config.yaml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./provisioning/datasources:/etc/grafana/provisioning/datasources
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./config/prometheus.yaml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./config/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200"
+
+  logger:
+    image: busybox
+    command: >
+      sh -c 'while true; do
+        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\", \"level\":\"info\", \"message\":\"log de teste gerado automaticamente\"}" >> /var/log/app.log;
+        sleep 5;
+      done'
+    volumes:
+      - monitoring-gateway-log:/var/log
+
+  otel-tester:
+    build: ./otel-metric-trace-generator
+    depends_on:
+      - otel-collector
+
+volumes:
+  grafana-storage:
+  monitoring-gateway-log:
+  loki_data:

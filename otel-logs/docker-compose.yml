@@ -1,0 +1,45 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    volumes:
+      - ./config/otel-collector-config.yml:/etc/otel/config.yaml
+      - monitoring-gateway-log:/var/log
+    command: ["--config=/etc/otel/config.yaml"]
+    depends_on:
+      - loki
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8888:8888"
+      - "13133:13133"
+
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - gateway-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./provisioning/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - gateway-network
+
+volumes:
+  grafana-storage:
+  monitoring-gateway-log:
+
+networks:
+  gateway-network:
+    driver: bridge
