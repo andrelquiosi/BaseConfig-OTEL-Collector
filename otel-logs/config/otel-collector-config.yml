@@ -1,31 +1,22 @@
 receivers:
-  filelog:
-    include: [ /*/*.log ]
-    start_at: beginning
-    poll_interval: 500ms
-    include_file_path: true
-    include_file_name: true
+  filelog/json:
+    include: [ /*/*.json ] # Ou qualquer padrão que pegue SÓ JSON
+    # ... operadores específicos para JSON ...
     operators:
-      - type: router
-        id: log_router
-        routes:
-          - output: json_route
-            expr: 'body startsWith "{"'
-          - output: plain_route
-            expr: 'not (body startsWith "{")'
-
-      - id: json_route
-        type: json_parser
+      - type: json_parser
         timestamp:
           parse_from: attributes.time
           layout: '%Y-%m-%dT%H:%M:%S%z'
         severity:
           parse_from: attributes.level
         body: attributes.message
-        
-      - id: plain_route
-        type: regex_parser
-        regex: '^(?P<time>[^ ]+) \[?(?P<level>[A-Z]+)\]? (?P<application>[^:]+): (?P<message>.+)$'
+
+  filelog/text:
+    include: [ /*/*.log ] # Ou qualquer padrão que pegue SÓ texto plano
+    # ... operadores específicos para texto plano ...
+    operators:
+      - type: regex_parser
+        regex: '^(?P<time>\S+)\s+\[?\s*(?i)(?P<level>[A-Z]+)\s*\]?\s+(?:(?P<application>[^:]+):\s*)?(?P<message>.*)$'
         timestamp:
           parse_from: attributes.time
           layout: '%Y-%m-%dT%H:%M:%S%z'
@@ -45,7 +36,7 @@ processors:
 service:
   pipelines:
     logs:
-      receivers: [filelog]
+      receivers: [filelog/json, filelog/text]
       processors: [batch]
       exporters: [loki]
 

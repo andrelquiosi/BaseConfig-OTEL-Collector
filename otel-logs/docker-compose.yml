@@ -11,7 +11,6 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
-      - "8888:8888"
       - "13133:13133"
     networks:
       - observability-network
@@ -42,7 +41,7 @@ services:
     image: busybox
     command: >
       sh -c 'while true; do
-        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\", \"level\":\"info\",\"application\":\"monitoring-gateway\",\"message\":\"log de teste gerado automaticamente do monitoring-gateway\"}" >> /log/monitoring-gateway.log;
+        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\", \"level\":\"info\",\"application\":\"monitoring-gateway\",\"message\":\"log de teste gerado automaticamente do monitoring-gateway\"}" >> /log/monitoring-gateway.json;
         sleep 5;
       done'
     volumes:
@@ -53,7 +52,7 @@ services:
     image: busybox
     command: >
       sh -c 'while true; do
-        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\", \"level\":\"info\",\"application\":\"monitoring-devices\",\"message\":\"log de teste gerado automaticamente do monitoring-devices\"}" >> /log/monitoring-devices.log;
+        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\", \"level\":\"info\",\"application\":\"monitoring-devices\",\"message\":\"log de teste gerado automaticamente do monitoring-devices\"}" >> /log/monitoring-devices.json;
         sleep 5;
       done'
     volumes:
@@ -65,7 +64,7 @@ services:
     image: busybox
     command: >
       sh -c 'while true; do
-        echo "$(date -u +%Y-%m-%dT%H:%M:%S%z) [INFO] monitoring-lote: log de teste gerado automaticamente do monitoring-lote" >> /log/monitoring-lote.log;
+        echo "$(date -u +%Y-%m-%dT%H:%M:%S%z) [ INFO ]  log de teste gerado automaticamente do monitoring-lote" >> /log/monitoring-lote.log;
         sleep 5;
       done'
     volumes:
