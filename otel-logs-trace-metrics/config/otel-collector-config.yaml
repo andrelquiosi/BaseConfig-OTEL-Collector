@@ -1,24 +1,22 @@
 receivers:
-  filelog:
-    include: [ /*/*.log ]
-    start_at: beginning
-    poll_interval: 500ms
-    include_file_path: true
-    include_file_name: true
+  filelog/json:
+    include: [ /*/*.json ] # Ou qualquer padrão que pegue SÓ JSON
+    # ... operadores específicos para JSON ...
     operators:
       - type: json_parser
-        id: parse_json
-        if: 'body matches "^\\{"'  # só tenta parsear se começa com {
         timestamp:
           parse_from: attributes.time
           layout: '%Y-%m-%dT%H:%M:%S%z'
         severity:
           parse_from: attributes.level
         body: attributes.message
+
+  filelog/text:
+    include: [ /*/*.log ] # Ou qualquer padrão que pegue SÓ texto plano
+    # ... operadores específicos para texto plano ...
+    operators:
       - type: regex_parser
-        id: parse_plain_log
-        if: 'not (body matches "^\\{")'  # só tenta parsear se NÃO começa com {
-        regex: '^(?P<time>[^ ]+) \[?(?P<level>[A-Z]+)\]? (?P<application>[^:]+): (?P<message>.+)$'
+        regex: '^(?P<time>\S+)\s+\[?\s*(?i)(?P<level>[A-Z]+)\s*\]?\s+(?:(?P<application>[^:]+):\s*)?(?P<message>.*)$'
         timestamp:
           parse_from: attributes.time
           layout: '%Y-%m-%dT%H:%M:%S%z'
@@ -29,7 +27,9 @@ receivers:
   otlp:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:4317
       http:
+        endpoint: 0.0.0.0:4318
 
 processors:
   batch: 
@@ -43,8 +43,6 @@ exporters:
     endpoint: "localhost:8889"  # Prometheus faz scrape aqui      
   loki:
     endpoint: http://loki:3100/loki/api/v1/push
-  debug:
-    verbosity: detailed
 
 service:
   pipelines:
@@ -60,7 +58,7 @@ service:
       exporters: [prometheus]
 
     logs:
-      receivers: [filelog]
+      receivers: [filelog/json, filelog/text]
       processors: [batch]
       exporters: [loki]
 

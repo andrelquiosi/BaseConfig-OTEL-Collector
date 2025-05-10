@@ -17,6 +17,7 @@ services:
       - "13133:13133"
     networks:
       - observability-network
+  
   loki:
     image: grafana/loki:2.9.2
     ports:
@@ -24,6 +25,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - observability-network
+  
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -39,6 +41,7 @@ services:
       - ./config/provisioning/datasources/grafana:/etc/grafana/provisioning/datasources
     networks:
       - observability-network
+  
   prometheus:
     image: prom/prometheus
     volumes:
@@ -49,22 +52,27 @@ services:
       - "9090:9090"
     networks:
       - observability-network
+  
   tempo:
     image: grafana/tempo:2.4.1
     volumes:
       - ./config/tempo.yaml:/etc/tempo.yaml
-      - ./tempo-data:/tmp/tempo
     command: ["-config.file=/etc/tempo.yaml"]
     ports:
       - "3200:3200"   # HTTP API
     networks:
       - observability-network
+  
   otel-metric-trace-generator:
     build: ./otel-metric-trace-generator
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      OTEL_SERVICE_NAME: "otel-metric-trace-generator"
     depends_on:
       - otel-collector
     networks:
       - observability-network
+  
   monitoring-gateway:
     image: busybox
     command: >
@@ -76,6 +84,7 @@ services:
       - logs:/log
     networks:
       - observability-network
+  
   monitoring-devices:
     image: busybox
     command: >
@@ -87,6 +96,7 @@ services:
       - logs:/log
     networks:
       - observability-network
+  
   monitoring-lote:
     image: busybox
     command: >
@@ -98,9 +108,11 @@ services:
       - logs:/log
     networks:
       - observability-network
+
 volumes:
   grafana-storage:
   logs:
+
 networks:
   observability-network:
     driver: bridge

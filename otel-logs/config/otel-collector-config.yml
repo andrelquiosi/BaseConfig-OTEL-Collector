@@ -23,7 +23,7 @@ receivers:
         severity:
           parse_from: attributes.level
         body: attributes.message
-
+        
 exporters:
   loki:
     endpoint: http://loki:3100/loki/api/v1/push

@@ -48,6 +48,7 @@ services:
       - logs:/log
     networks:
       - observability-network
+ 
   monitoring-devices:
     image: busybox
     command: >
