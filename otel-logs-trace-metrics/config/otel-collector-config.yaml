@@ -39,10 +39,15 @@ exporters:
     endpoint: tempo:4317
     tls:
       insecure: true  # Desative isso se usar HTTPS
+
   prometheus:
-    endpoint: "localhost:8889"  # Prometheus faz scrape aqui      
+    endpoint: "localhost:8889"  # Prometheus faz scrape aqui  
+
   loki:
     endpoint: http://loki:3100/loki/api/v1/push
+
+  debug:
+    verbosity: detailed
 
 service:
   pipelines:
@@ -50,7 +55,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp]
+      exporters: [otlp, debug]
 
     metrics:
       receivers: [otlp]
@@ -60,8 +65,5 @@ service:
     logs:
       receivers: [filelog/json, filelog/text]
       processors: [batch]
-      exporters: [loki]
+      exporters: [loki, debug]
 
-  telemetry:
-    logs:
-      level: "debug"
