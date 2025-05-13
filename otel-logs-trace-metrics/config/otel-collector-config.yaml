@@ -1,7 +1,8 @@
 receivers:
   filelog/json:
-    include: [ /*/*.json ] # Ou qualquer padrão que pegue SÓ JSON
-    # ... operadores específicos para JSON ...
+    include: [ /*/*.json ]
+    include_file_path: false
+    include_file_name: true
     operators:
       - type: json_parser
         timestamp:
@@ -12,8 +13,9 @@ receivers:
         body: attributes.message
 
   filelog/text:
-    include: [ /*/*.log ] # Ou qualquer padrão que pegue SÓ texto plano
-    # ... operadores específicos para texto plano ...
+    include: [ /*/*.log ]
+    include_file_path: false
+    include_file_name: true
     operators:
       - type: regex_parser
         regex: '^(?P<time>\S+)\s+\[?\s*(?i)(?P<level>[A-Z]+)\s*\]?\s+(?:(?P<application>[^:]+):\s*)?(?P<message>.*)$'
