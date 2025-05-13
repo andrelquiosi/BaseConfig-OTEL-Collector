@@ -79,18 +79,6 @@ services:
     networks:
       - observability-network
   
-  monitoring-gateway:
-    image: busybox
-    command: >
-      sh -c 'while true; do
-        echo "{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%S%z)\",\"level\":\"info\",\"application\":\"monitoring-gateway\",\"message\":\"log de teste gerado automaticamente do monitoring-gateway\"}" >> /log/monitoring-gateway.json;
-        sleep 5;
-      done'
-    volumes:
-      - logs:/log
-    networks:
-      - observability-network
- 
   monitoring-devices:
     image: busybox
     command: >
