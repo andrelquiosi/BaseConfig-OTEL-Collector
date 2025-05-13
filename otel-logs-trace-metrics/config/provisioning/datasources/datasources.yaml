@@ -5,7 +5,11 @@ datasources:
     url: http://prometheus:9090
     editable: true
     jsonData:
-      timeInterval: 5s
+      timeInterval: 60s
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+          urlDisplayLabel: "Trace: $${__value.raw}"
 
   - name: Tempo
     type: tempo
@@ -13,7 +17,22 @@ datasources:
     url: http://tempo:3200
     editable: true
     jsonData:
-      maxLines: 1000
+      tracesToLogsV2:
+        customQuery: true
+        datasourceUid: "loki"
+        query: '{$${__tags}} | trace_id = "$${__trace.traceId}"'
+        tags:
+          - key: "service.name"
+            value: "service_name"
+
+      serviceMap:
+        datasourceUid: "prometheus"
+      search:
+        hide: false
+      nodeGraph:
+        enabled: true
+      lokiSearch:
+        datasourceUid: "loki"
       
   - name: Loki
     type: loki
@@ -21,6 +40,11 @@ datasources:
     url: http://loki:3100
     editable: true
     jsonData:
-      maxLines: 1000
-      timeInterval: 5s
+          derivedFields:
+            - name: "trace_id"
+              matcherType: "label"
+              matcherRegex: "trace_id"
+              url: "$${__value.raw}"
+              datasourceUid: "tempo"
+              urlDisplayLabel: "Trace: $${__value.raw}"
 
