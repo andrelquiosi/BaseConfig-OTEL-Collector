@@ -11,6 +11,11 @@ receivers:
         severity:
           parse_from: attributes.level
         body: attributes.message
+      - type: add
+        id: default_trace_fields
+        attributes:
+          trace_id: ""
+          span_id: ""
 
   filelog/text:
     include: [ /*/*.log ]
@@ -25,6 +30,11 @@ receivers:
         severity:
           parse_from: attributes.level
         body: attributes.message
+      - type: add
+        id: default_trace_fields
+        attributes:
+          trace_id: ""
+          span_id: ""
 
   otlp:
     protocols:

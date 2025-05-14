@@ -21,7 +21,7 @@ func InitTracer() func(context.Context) error {
 		sdktrace.WithBatcher(exp),
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceName("otel-slog-example"),
+			semconv.ServiceName("otel-metric-trace-generator"),
 		)),
 	)
 	otel.SetTracerProvider(tp)
@@ -29,5 +29,5 @@ func InitTracer() func(context.Context) error {
 }
 
 func GetTracer() trace.Tracer {
-	return tp.Tracer("otel-slog-example")
+	return tp.Tracer("otel-metric-trace-generator")
 }
